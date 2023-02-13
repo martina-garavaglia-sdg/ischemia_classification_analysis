@@ -1,5 +1,12 @@
 module ischemia_classification_analysis
 
-# Write your package code here.
+using Statistics: mean, std
+using Flux 
+using Flux: @epochs, onehotbatch, onecold, logitcrossentropy, train!, throttle, flatten, params, loadparams!
+using Flux.Data: DataLoader
+
+export accuracy, is_best
+
+include("metrics.jl")
 
 end
