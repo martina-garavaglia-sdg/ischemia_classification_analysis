@@ -9,6 +9,7 @@ using Optim, FluxOptTools
 using Random
 #using ischemia_classification_analysis
 
+Random.seed!(3)
 
 # Accuracy
 function accuracy(y_true::OneHotMatrix, y_pred::Any)
@@ -47,23 +48,39 @@ x_test = permutedims(test[:, 2:end], (2,1))
 train_data = DataLoader((x_train, y_train); batchsize = 32, shuffle = true);
 test_data = DataLoader((x_test, y_test); batchsize = 32, shuffle = true);
 
-dimensions = [32,16,8];
+dimensions = [96,64,32,16,8]; ##
 
 # Define the parametric machine
 machine = DenseMachine(dimensions, sigmoid);
 
-model = Flux.Chain(Dense(96, 32), machine, Dense(sum(dimensions), 2)) |> f64;
+model = Flux.Chain(machine, Dense(sum(dimensions), 2)) |> f64;
 
 model = cpu(model)
 
 
 # Parameters
-Random.seed!(3)
+
 params = Flux.params(model);
 
-optimiser = ADAM(0.05)
+optimiser = ADAM(0.0008)
 
 loss(x,y) = logitcrossentropy(model(x), y)
+
+
+# smoothness(W) = zero(eltype(W))
+# smoothness(W, d::Int, ds::Int...) = sum(abs2, diff(W; dims=d)) + smoothness(W, ds...)
+
+# time_smoothness(m::RecurMachine) = smoothness(m.W, 1)
+
+
+# # This code allows to explore different costs more easily
+# loss = function (machine, input, output)
+#     p = machine(input)
+#     l = logitcrossentropy(p, output)
+#     c_t =  0.01f0 * time_smoothness(machine[1])
+#     return l + c_t
+# end
+
 
 # Training and plotting
 epochs = Int64[]
@@ -97,29 +114,28 @@ for epoch in 1:500
 end
 
 @show maximum(acc_test)
-@show minimum(loss_on_train)
 @show minimum(loss_on_test)
 
-# Extract and add new trained parameters
-if isempty(best_params)
-    best_params = params
-end
+# # Extract and add new trained parameters
+# if isempty(best_params)
+#     best_params = params
+# end
 
-Flux.loadparams!(model, best_params);
+# Flux.loadparams!(model, best_params);
 
 
 # Visualization
 plot(epochs, loss_on_train, lab="Training loss", lw=2, ylims = (0,1));
 plot!(epochs, loss_on_test, lab="Test loss", lw=2, ylims = (0,1));
-#title!("Ischemia - dense machine");
+title!("Ischemia - dense machine");
 yaxis!("Losses");
 xaxis!("Training epochs");
 savefig("visualization/losses/ischemie_dense_loss.png");
 
 
-plot(epochs, acc_test, lab="Test accuracy", lw=2, ylims = (0,1));
-plot!(epochs, acc_train, lab="Test accuracy", lw=2, ylims = (0,1));
-#title!("Ischemie - dense machine");
+plot(epochs, acc_train, lab="Training accuracy", lw=2, ylims = (0,1));
+plot!(epochs, acc_test, lab="Test accuracy", lw=2, ylims = (0,1));
+title!("Ischemia - dense machine");
 yaxis!("Accuracy");
 xaxis!("Training epochs");
 savefig("visualization/accuracies/ischemie_dense_accuracy.png");
@@ -128,22 +144,57 @@ savefig("visualization/accuracies/ischemie_dense_accuracy.png");
 
 ########
 # LBFGS
-loss() = logitcrossentropy(model(x_train), y_train);
 
-params = Flux.params(model);
+Random.seed!(3)
+dimensions = [96,64,32,16,8];
+machine = DenseMachine(dimensions, sigmoid);
 
+model_lbfgs = Flux.Chain(machine, Dense(sum(dimensions), 2)) |> f64;
 
-lossfun, gradfun, fg!, p0 = optfuns(loss, params)
-res = Optim.optimize(Optim.only_fg!(fg!), p0, Optim.Options(iterations=500, store_trace=true))
+model_lbfgs = cpu(model_lbfgs)
 
-best_params_PM = res.minimizer
-#copy flattened optimized params 
-copy!(params, best_params_PM)
-
-Flux.loadparams!(model, params)
-
-accuracy(y_test, model(x_test))
-logitcrossentropy(y_test, model(x_test))
-logitcrossentropy(y_train, model(x_train))
+loss_lbfgs() = crossentropy(model_lbfgs(x_train), y_train);
 
 
+params_lbfgs = Flux.params(model_lbfgs);
+
+
+# lossfun, gradfun, fg!, p0 = optfuns(loss_lbfgs, params_lbfgs)
+# res = Optim.optimize(Optim.only_fg!(fg!), p0, Optim.Options(iterations=200, store_trace=true))
+
+# best_params_PM = res.minimizer
+# #copy flattened optimized params 
+# copy!(params_lbfgs, best_params_PM)
+
+# Flux.loadparams!(model_lbfgs, params_lbfgs)
+
+accuracy(y_test, model_lbfgs(x_test))
+# logitcrossentropy(y_test, model_lbfgs(x_test))
+# logitcrossentropy(y_train, model_lbfgs(x_train))
+
+
+best_params = []
+res_lbfgs = map(1:1) do i
+    @show i
+    Random.seed!(i)
+    model_lbfgs = Flux.Chain(machine, Dense(sum(dimensions), 2), softmax) |> f64;
+    loss_lbfgs() = Flux.crossentropy(y_train, model_lbfgs(x_train));
+    pars = Flux.params(model_lbfgs)
+    lossfun, gradfun, fg!, p0 = optfuns(loss_lbfgs, pars)
+    res = Optim.optimize(Optim.only_fg!(fg!), p0, LBFGS(linesearch = LineSearches.BackTracking()), Optim.Options(iterations=500, store_trace=true))
+    print(res)
+    push!(best_params, res.minimizer)
+    res
+
+    #push!(best_params, res.minimizer)
+end
+# linesearch = LineSearches.MoreThuente()
+valuetrace(r) = getfield.(r.trace, :value)
+valuetraces = valuetrace.(res_lbfgs)
+plot(valuetraces, xscale=:identity, lab="")
+
+
+# Todo
+Flux.loadparams!(model_lbfgs, best_params)
+
+accuracy(y_test, model_lbfgs(x_test))
