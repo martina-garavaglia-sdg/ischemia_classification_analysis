@@ -4,27 +4,29 @@ using Flux: onehotbatch, crossentropy
 using ischemia_classification_analysis
 using ParametricMachinesDemos
 using LineSearches
-using Plots
-using Random
 
-# Loading and processing data
-train = readdlm("data/ECG200_TRAIN.txt");
-test = readdlm("data/ECG200_TEST.txt");
 
-y_train = train[:,1];
-y_test = test[:,1];
-y_train = onehotbatch(y_train, (-1,1));
-y_test = onehotbatch(y_test, (-1,1));
+# Split train test data
+train = readdlm("data/ECG200_TRAIN.txt")
+test = readdlm("data/ECG200_TEST.txt")
 
-x_train = permutedims(train[:, 2:end], (2,1));
-x_test = permutedims(test[:, 2:end], (2,1));
+y_train = train[:, 1]
+y_test = test[:,1]
+y_train = onehotbatch(y_train, (-1,1))
+y_test = onehotbatch(y_test, (-1,1))
 
-Random.seed!(3)
+x_train = permutedims(train[:, 2:end], (2,1))
+x_test = permutedims(test[:, 2:end], (2,1))
+
+x_train = Flux.unsqueeze(x_train, 2)
+x_test = Flux.unsqueeze(x_test, 2)
+
+
 # Define machine's hyperparameters
-machine_type = DenseMachine
+machine_type = RecurMachine
 dimensions = [16,16,16,16,16,16]
-timeblock = 0 # only for recurrent
-pad = 0 # only for recurrent
+timeblock = 16 # only for recurrent
+pad = 1 # only for recurrent
 
 # Define optimizer's hyperparameters
 opt = "Adam"
@@ -52,17 +54,15 @@ best_params, best_model, loss_on_train, acc_train, acc_test = train_forecast(
     n_epochs, 
     cpu)
 
-maximum(acc_test)
-
 
 # Visualization
-plot(1:n_epochs, loss_on_train, lab="Training loss")
+plot(epochs, loss_on_train, lab="Training loss")
 yaxis!("Loss");
 xaxis!("Training epochs");
 savefig("visualization/losses/recurrent/ischemie_rec_loss.png");
 
-plot(1:n_epochs, acc_train, lab="Accuracy on train")
-plot!(1:n_epochs, acc_test, lab="Accuracy on test")
+plot(epochs, acc_train, lab="Accuracy on train")#, lw=2, ylims = (0,1));
+plot!(epochs, acc_test, lab="Accuracy on test")#, lw=2, ylims = (0,1));
 yaxis!("Accuracies");
 xaxis!("Training epoch");
 savefig("visualization/accuracies/recurrent/ischemie_rec_accuracy.png");
