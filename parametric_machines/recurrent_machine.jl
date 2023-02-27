@@ -29,12 +29,12 @@ timeblock = 16 # only for recurrent
 pad = 1 # only for recurrent
 
 # Define optimizer's hyperparameters
-opt = "Adam"
+opt = "LBFGS"
 learning_rate = 0.01
 line_search = BackTracking()
 
 # Define training's hyperparameters
-n_epochs = 300
+n_epochs = 50
 
 
 # Training
