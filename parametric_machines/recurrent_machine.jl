@@ -56,13 +56,13 @@ best_params, best_model, loss_on_train, acc_train, acc_test = train_forecast(
 
 
 # Visualization
-# plot(epochs, loss_on_train, lab="Training loss")
-# yaxis!("Loss");
-# xaxis!("Training epochs");
-# savefig("visualization/losses/recurrent/ischemie_rec_loss.png");
+plot(1:n_epochs, loss_on_train, lab="Training loss")
+yaxis!("Loss");
+xaxis!("Training epochs");
+savefig("visualization/losses/recurrent/ischemie_rec_loss.png");
 
-# plot(epochs, acc_train, lab="Accuracy on train")#, lw=2, ylims = (0,1));
-# plot!(epochs, acc_test, lab="Accuracy on test")#, lw=2, ylims = (0,1));
-# yaxis!("Accuracies");
-# xaxis!("Training epoch");
-# savefig("visualization/accuracies/recurrent/ischemie_rec_accuracy.png");
+plot(1:n_epochs, acc_train, lab="Accuracy on train")
+plot!(1:n_epochs, acc_test, lab="Accuracy on test")
+yaxis!("Accuracies");
+xaxis!("Training epoch");
+savefig("visualization/accuracies/recurrent/ischemie_rec_accuracy.png");

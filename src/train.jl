@@ -7,9 +7,9 @@ using LineSearches
 using ParametricMachinesDemos
 
 
-function train_forecast(x_train, y_train::Flux.OneHotArray, x_test, y_test::Flux.OneHotArray,
+function train_forecast(x_train::AbstractArray, y_train::Flux.OneHotArray, x_test::AbstractArray, y_test::Flux.OneHotArray,
     machine_type,
-    dimensions, timeblock, pad, opt = "Adam", learning_rate = 0.01, line_search = BackTracking(),
+    dimensions, timeblock = 1, pad = 1, opt = "Adam", learning_rate = 0.01, line_search = BackTracking(),
     n_epochs=100, device=cpu)
 
     Random.seed!(3)
@@ -44,7 +44,10 @@ end
 
 
 
-function train_ADAM(x_train, y_train, x_test, y_test, learning_rate, params, model, n_epochs)
+function train_ADAM(x_train::AbstractArray, y_train::Flux.OneHotArray, 
+                    x_test::AbstractArray, y_test::Flux.OneHotArray, 
+                    learning_rate, params, model, n_epochs)
+
     train_data = DataLoader((x_train, y_train); batchsize = 32, shuffle = true);
     opt = ADAM(learning_rate);
 
@@ -86,7 +89,10 @@ function train_ADAM(x_train, y_train, x_test, y_test, learning_rate, params, mod
 end
 
 
-function train_LBFGS(x_train, y_train, x_test, y_test, model, line_search, params, n_epochs)
+function train_LBFGS(x_train::AbstractArray, y_train::Flux.OneHotArray, 
+                        x_test::AbstractArray, y_test::Flux.OneHotArray, 
+                        model, line_search, params, n_epochs)
+
     @info "Starting training."
     loss() = crossentropy(model(x_train), y_train);
    
@@ -108,7 +114,10 @@ function train_LBFGS(x_train, y_train, x_test, y_test, model, line_search, param
 end
 
 
-function train_ConjGrad(x_train, y_train, x_test, y_test, model, line_search, params, n_epochs)
+function train_ConjGrad(x_train::AbstractArray, y_train::Flux.OneHotArray, 
+                        x_test::AbstractArray, y_test::Flux.OneHotArray, 
+                        model, line_search, params, n_epochs)
+
     @info "Starting training."
     loss() = crossentropy(model(x_train), y_train);
     lossfun, gradfun, fg!, p0 = optfuns(loss, params)
