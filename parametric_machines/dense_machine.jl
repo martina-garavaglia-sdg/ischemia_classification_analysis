@@ -1,12 +1,10 @@
 using DelimitedFiles
 using Flux
-using Flux: onehotbatch, crossentropy
+using Flux: onehotbatch
 using ischemia_classification_analysis
 using ParametricMachinesDemos
 using LineSearches
 using Plots
-using Random
-using Optim
 
 # Loading and processing data
 train = readdlm("data/ECG200_TRAIN.txt");
@@ -21,7 +19,6 @@ x_train = permutedims(train[:, 2:end], (2,1));
 x_test = permutedims(test[:, 2:end], (2,1));
 
 
-Random.seed!(3)
 # Define machine's hyperparameters
 machine_type = DenseMachine
 dimensions = [96,64,32,16,8]

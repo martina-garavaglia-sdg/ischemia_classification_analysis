@@ -1,12 +1,13 @@
 using DelimitedFiles
 using Flux
-using Flux: onehotbatch, crossentropy
+using Flux: onehotbatch
+using Plots
 using ischemia_classification_analysis
 using ParametricMachinesDemos
 using LineSearches
 
 
-# Split train test data
+# Loading and processing data
 train = readdlm("data/ECG200_TRAIN.txt")
 test = readdlm("data/ECG200_TEST.txt")
 
@@ -25,8 +26,8 @@ x_test = Flux.unsqueeze(x_test, 2)
 # Define machine's hyperparameters
 machine_type = RecurMachine
 dimensions = [16,16,16,16,16,16]
-timeblock = 16 # only for recurrent
-pad = 1 # only for recurrent
+timeblock = 16 
+pad = 1 
 
 # Define optimizer's hyperparameters
 opt = "Adam"
