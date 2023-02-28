@@ -34,7 +34,7 @@ learning_rate = 0.01
 line_search = BackTracking()
 
 # Define training's hyperparameters
-n_epochs = 20
+n_epochs = 300
 
 
 # Training
