@@ -32,11 +32,11 @@ function train_forecast(x_train, y_train::Flux.OneHotArray, x_test, y_test::Flux
     end
 
     if opt == "LBFGS"
-        return train_LBFGS(x_train, y_train, model, x_test, y_test, line_search, params, n_epochs)
+        return train_LBFGS(x_train, y_train, x_test, y_test, model, line_search, params, n_epochs)
     end
 
     if opt == "ConjugateGradient"
-        return train_ConjGrad(x_train, y_train, model, x_test, y_test, line_search, params, n_epochs)
+        return train_ConjGrad(x_train, y_train, x_test, y_test, model, line_search, params, n_epochs)
     end
 
     @error "This optimizer has not been implemented yet."
@@ -89,6 +89,7 @@ end
 function train_LBFGS(x_train, y_train, x_test, y_test, model, line_search, params, n_epochs)
     @info "Starting training."
     loss() = crossentropy(model(x_train), y_train);
+   
     _, _, fg!, p0 = optfuns(loss, params)
     res = Optim.optimize(Optim.only_fg!(fg!), p0, LBFGS(linesearch = line_search), Optim.Options(iterations=n_epochs, store_trace=true))
 

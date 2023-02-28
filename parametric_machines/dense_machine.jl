@@ -29,7 +29,7 @@ timeblock = 0 # only for recurrent
 pad = 0 # only for recurrent
 
 # Define optimizer's hyperparameters
-opt = "LBFGS"
+opt = "Adam"
 learning_rate = 0.01
 line_search = BackTracking()
 

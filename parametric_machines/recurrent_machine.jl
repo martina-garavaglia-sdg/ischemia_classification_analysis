@@ -29,12 +29,12 @@ timeblock = 16 # only for recurrent
 pad = 1 # only for recurrent
 
 # Define optimizer's hyperparameters
-opt = "LBFGS"
+opt = "Adam"
 learning_rate = 0.01
 line_search = BackTracking()
 
 # Define training's hyperparameters
-n_epochs = 50
+n_epochs = 300
 
 
 # Training
@@ -56,13 +56,13 @@ best_params, best_model, loss_on_train, acc_train, acc_test = train_forecast(
 
 
 # Visualization
-plot(epochs, loss_on_train, lab="Training loss")
-yaxis!("Loss");
-xaxis!("Training epochs");
-savefig("visualization/losses/recurrent/ischemie_rec_loss.png");
+# plot(epochs, loss_on_train, lab="Training loss")
+# yaxis!("Loss");
+# xaxis!("Training epochs");
+# savefig("visualization/losses/recurrent/ischemie_rec_loss.png");
 
-plot(epochs, acc_train, lab="Accuracy on train")#, lw=2, ylims = (0,1));
-plot!(epochs, acc_test, lab="Accuracy on test")#, lw=2, ylims = (0,1));
-yaxis!("Accuracies");
-xaxis!("Training epoch");
-savefig("visualization/accuracies/recurrent/ischemie_rec_accuracy.png");
+# plot(epochs, acc_train, lab="Accuracy on train")#, lw=2, ylims = (0,1));
+# plot!(epochs, acc_test, lab="Accuracy on test")#, lw=2, ylims = (0,1));
+# yaxis!("Accuracies");
+# xaxis!("Training epoch");
+# savefig("visualization/accuracies/recurrent/ischemie_rec_accuracy.png");
