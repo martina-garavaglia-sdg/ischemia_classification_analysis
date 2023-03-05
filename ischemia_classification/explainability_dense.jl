@@ -22,19 +22,31 @@ x_test = permutedims(test[:, 2:end], (2,1))
 train_data = DataLoader((x_train, y_train); batchsize = 32, shuffle = true);
 
 # crea esempio di macchina parametrica
-dimensions = [16,16,16,16,16,16]
+embedder = Dense(96,64)  
+dimensions = [64,32,16,8]
 machine = DenseMachine(dimensions, sigmoid);
+model = Flux.Chain(embedder, machine)
+
 
 
 # implementazione di compute_sensitivity che usa internals del pacchetto (va pacchettizzato in futuro)
 function compute_sensitivity(m, x)
     filtrations = ParametricMachinesDemos.filtrations(m, x)
-    y, z = ParametricMachinesDemos.solve(x, nothing, m.W, m.σ, filtrations)
-    return ParametricMachinesDemos.derivative.(z, m.σ, y)
+    y, z = ParametricMachinesDemos.solve(x, nothing, m.W, m.σ, filtrations) # prima e dopo nonlin
+    return ParametricMachinesDemos.derivative.(z, m.σ, y) # derivata di sigma su y
 end
 
 # restituisce sensitivity dello stato globale della macchina parametrica
-sensitivity = compute_sensitivity(machine, x_train)
+
+function compute_sensitivity(e, m, x)
+    input_machine = e(x)
+    compute_sensitivity(m, input_machine)
+end
 
 
-heatmap(sensitivity)
+#input_machine = embedder(x_train)
+
+sensitivity = compute_sensitivity(machine, input_machine)
+
+
+heatmap(sensitivity, color=:thermal)
