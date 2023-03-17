@@ -6,13 +6,13 @@ y_test = test[:,1]
 
 
 
-plot(data_abnormal[1,2:end], legend = false)
-for i in 2:133
-    plot!(data_abnormal[i,2:end], legend = false)
+Plots.plot(data_normal[1,2:end], legend = false, linecolor=:gray, xtickfontsize=10, ytickfontsize=10, xguidefontsize=10, yguidefontsize=10, ylim=(-4,4), xlab="Samples", ylab="mV")
+for i in 2:67
+    Plots.plot!(data_normal[i,2:end], legend = false, linecolor=:gray, xtickfontsize=10, ytickfontsize=10, xguidefontsize=10, yguidefontsize=10, ylim=(-4,4))
 end
 
 
-savefig("visualization/data/abnormal.png")
+savefig("visualization/data/normal_gray.png")
 
 # Compute mean for each series
 data = train
@@ -29,6 +29,17 @@ data_abnormal = vcat(train_abnormal, test_abnormal)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 means_normal = Float64[]
 stds_normal = Float64[]
 
@@ -37,8 +48,8 @@ for i in 2:97
     push!(stds_normal, std(data_normal[:,i]))
 end
 
-plot(means_normal, lw = 2, ribbon = stds_normal, fa=0.3, lab = "normal heartbeats")
-#savefig("visualization/data/mean_normal.png")
+plot!(means_normal, lw = 2, ribbon = stds_normal, fa=0.3, xtickfontsize=10, ytickfontsize=10, xguidefontsize=10, yguidefontsize=10, legendfontsize=12, lab = "normal heartbeats", xlab="Samples")
+savefig("visualization/data/ischemia_normal_mean_stds.png")
 
 
 means_abnormal = Float64[]
@@ -48,8 +59,8 @@ for i in 2:97
     push!(stds_abnormal, std(data_abnormal[:,i]))
 end
 
-plot!(means_abnormal, lw=2, ribbon = stds_abnormal, fa=0.3, lab = "myocardial ischemia")
-savefig("visualization/data/ischemia_means_std.png")
+plot!(means_abnormal, lw=2, ribbon = stds_abnormal, fa=0.3, xtickfontsize=10, ytickfontsize=10, xguidefontsize=10, yguidefontsize=10, legendfontsize=12, lab = "myocardial ischemia", xlab="Samples")
+savefig("visualization/data/ischemia_abnormal_means_std.png")
 
 
 plot(data_abnormal[1,2:end], legend = false)

@@ -5,9 +5,10 @@ using Optim, FluxOptTools
 using Random
 using LineSearches
 using ParametricMachinesDemos
+using Optim: optimize, only_fg!, minimizer
 
 
-function train_forecast(x_train::AbstractArray, y_train::Flux.OneHotArray, x_test::AbstractArray, y_test::Flux.OneHotArray,
+function train_classification(x_train::AbstractArray, y_train, x_test::AbstractArray, y_test,
     machine_type, dimensions, loss; embedder = identity, timeblock = 1, pad = 1, opt = "Adam", learning_rate = 0.01, line_search = BackTracking(),
     n_epochs=100, device=cpu)
 
@@ -43,16 +44,12 @@ end
 
 
 
-function train_ADAM(x_train::AbstractArray, y_train::Flux.OneHotArray, 
-                    x_test::AbstractArray, y_test::Flux.OneHotArray, loss,
+function train_ADAM(x_train::AbstractArray, y_train, 
+                    x_test::AbstractArray, y_test, loss,
                     learning_rate, params, model, n_epochs)
     
-    v_model = []
-    for i in 1:size(x_train)[3]
-        push!(v_model, model)
-    end
-
-    train_data = DataLoader((v_model, x_train, y_train); batchsize = 32, shuffle = true);
+    Random.seed!(28)
+    train_data = DataLoader((x_train, y_train); batchsize = 32, shuffle = true);
     opt = ADAM(learning_rate);
 
     
@@ -62,16 +59,24 @@ function train_ADAM(x_train::AbstractArray, y_train::Flux.OneHotArray,
     acc_test = Float64[]
     best_params = Float32[]
 
+
     for epoch in 1:n_epochs
 
-        # Train
-        train!(loss, params, train_data, opt)
+        for (x,y) in train_data
+            # Train
+            # train!(loss, params, train_data, opt)
+            gs = gradient(params) do 
+                loss(model, x, y)
+            end
 
+            Flux.Optimise.update!(opt, params, gs)
+
+        end
         # Saving losses and accuracies for visualization
-        push!(loss_on_train, loss(v_model, x_train, y_train))
+        push!(loss_on_train, loss(model, x_train, y_train))
         push!(acc_train, accuracy(y_train, model(x_train)))
         push!(acc_test, accuracy(y_test, model(x_test)))
-        @show loss(v_model, x_train, y_train)
+        @show loss(model, x_train, y_train)
 
         # Saving the best parameters
         if epoch > 1
@@ -79,7 +84,9 @@ function train_ADAM(x_train::AbstractArray, y_train::Flux.OneHotArray,
                 best_params = params
             end
         end
+
     end
+
 
     if isempty(best_params)
         best_params = params
