@@ -25,7 +25,6 @@ x_train = Flux.unsqueeze(x_train, 2)
 x_test = Flux.unsqueeze(x_test, 2)
 
 
-
 # Saving model parameters
 # weights = Tracker.data.(Flux.params(best_model));
 # @save "mymodel.bson" weights
@@ -41,8 +40,9 @@ best_model = Flux.Chain(embedder, machine, Conv((1,), sum(dimensions) => 2), fla
 
 weights = Flux.params(best_model)
 
-@load "mymodel.bson" weights
+@load "ischemia_classification/mymodel.bson" weights
 Flux.loadparams!(best_model, weights)
+
 
 ########################################################################
 ############################# EXPLAINABILITY ###########################
@@ -75,19 +75,22 @@ Plots.plot(plot1, plot2, plot3, plot4)
 savefig("visualization/explainability/explainability_recc.png")
 
 
+
 ####################################################################
 ################### UMAP - dimensionality reduction #################
 #####################################################################
 
 # Input must be of size (n_features, n_samples)
 input_embedding = reshape(sensitivity, (96*96,100))
-test_embedding = reshape(sensitivity_test[:,:,1:1], (96*96,1))
+test_embedding_one = reshape(sensitivity_test[:,:,[97,7]], (96*96,2))
+test_embedding = hcat(input_embedding, test_embedding_one)
 
+test_tot_embedding = reshape(sensitivity_test[:,:,:], (96*96,100))
 # Ground truth
 gt_train = onecold(y_train) #.== 0
 gt_train_normal_inds = findall(gt_train .== 1)
 gt_train_ischemia_inds = findall(gt_train .== 2)
-
+gt_test = onecold(y_test)
 
 # Compute loss on train -> for graph representation
 loss_on_train_samples = []
@@ -97,15 +100,21 @@ for (i,y) in enumerate(eachcol(y_train))
     push!(loss_on_train_samples, crossentropy(best_model(x), y))
 end
 
+for (i,y) in enumerate(eachcol(y_test[:,[97,7]])) 
+    x = x_test[:,:,i:i]
+    push!(loss_on_train_samples, crossentropy(best_model(x), y))
+end
+
+
 
 # Performing UMAP
-embedding = dimensionality_reduction(input_embedding, input_embedding)
+embedding = dimensionality_reduction(input_embedding, test_embedding)
 
 
 # Fare legenda a parte: triangoli = normal, pallini=ischemia
 Gadfly.plot(
-    layer(x = embedding[1,gt_train_normal_inds], y = embedding[2,gt_train_normal_inds], Theme(panel_fill="white"), color=loss_on_train[gt_train_normal_inds], shape=[utriangle], Geom.point),
-    layer(x = embedding[1,gt_train_ischemia_inds], y = embedding[2,gt_train_ischemia_inds], Theme(panel_fill="white"), color=loss_on_train[gt_train_ischemia_inds], Geom.point))
+    layer(x = embedding[1,gt_train_normal_inds], y = embedding[2,gt_train_normal_inds], Theme(panel_fill="white"), color=loss_on_train_samples[gt_train_normal_inds], shape=[utriangle], Geom.point),
+    layer(x = embedding[1,gt_train_ischemia_inds], y = embedding[2,gt_train_ischemia_inds], Theme(panel_fill="white"), color=loss_on_train_samples[gt_train_ischemia_inds], Geom.point))
 
 
 ####################################################################
@@ -115,23 +124,44 @@ Gadfly.plot(
 # Filter function
 filter = (data) -> vec(mapslices(p->p[1], data, dims=1))
 
-# Mapper attributes:
-#     adj::AbstractMatrix{<:Integer}
-#     filter::Vector{<:Real}
-#     patches::Vector{Vector{<:Integer}}
-#     centers::Matrix{<:Real}
+"Mapper attributes:
+    adj::AbstractMatrix{<:Integer}
+    filter::Vector{<:Real}
+    patches::Vector{Vector{<:Integer}}
+    centers::Matrix{<:Real}
+"
 
 # Mapper
-mpr, plt = plot_mapper(embedding, filter) #, loss_on_train_samples
+mpr, plt = plot_mapper(embedding, filter, loss_on_train_samples)
 plt
 
 
-# Brutto modo per inserire nel grafo in TRAIN la quantità relativa di osservazioni di ischemia
-# relative_number_of_ischemia = []
 
-# for i in 1:size(mpr.patches)[1]
-#     n_ischemia = sum(test[mpr.patches[i],1] .== 1)
-#     push!(relative_number_of_ischemia, n_ischemia/length(mpr.patches[i]))
-# end
 
-# print(string.(relative_number_of_ischemia))
+### Plot series with sensitivity colors
+id_series = 7
+s_normal = transpose(sensitivity[:,:, id_series])
+ts_normal = x_train[:,:,id_series]
+
+
+s_cam = sensitivity_cam(s_normal, ts_normal)
+Makie.save("visualization/explainability/cam/series7.png", s_cam)
+
+
+# Graph metrics
+
+samples = mpr.patches[10]
+gtpositive = sum(train[samples,1] .==1)
+gtnegative = size(samples)[1] - gtpositive
+conf_matrix = MLBase.confusmat(2, gt_test[samples], onecold(best_model(x_test)[:,samples]))
+tp= conf_matrix[1,1]
+tn= conf_matrix[2,2]
+fp= conf_matrix[1,2]
+fn=conf_matrix[2,1]
+
+r = ROCNums(gtpositive, gtnegative, tp, tn, fp, fn)
+
+accuracy(y_test[:,samples], best_model(x_test)[:,samples])
+precision(r)
+recall(r)
+f1score(r)
