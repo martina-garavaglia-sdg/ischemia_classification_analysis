@@ -19,16 +19,16 @@ For time machine, we divide the global space into six subspaces, each of size 16
 Using dense machines, the results surpass the state of the art achieved by other models with an accuracy of 0.9.
 With time machine, the achieved accuracy is 0.91, and once again, above the state of the art.
 
-# Regularization
+## Regularization
 Regularization is a technique commonly used in deep learning to prevent overfitting. Overfitting occurs when a model is too complex and overspecializes its parameters to perfectly fit the training data. This specialization results in poor generalization to data endowed with different features or following a different distribution than the training ones. Regularization involves adding a penalty term to the loss function of the neural network during training. As an example, the penalty term can be proportional to the squared magnitude of the weights in the network, which encourages the network to learn smaller weights and thus learn smoother solutions.
 
 In our scenario, the regularization term is more sophisticated. The smoothing process is only applied to the temporal dimension, which involves squaring the difference between model weights in two consecutive data points in the time series.
 When performing regularization on the time dimension, the goal is to encourage the model to learn smooth patterns over time. By regularizing only on the time dimension, the model is encouraged to learn patterns that are consistent over time, which can improve its ability to predict future outcomes.
 
-# Explainability
+## Explainability
 The word explainability refers to the ability to understand and interpret the decision-making process of a machine-learning model in an input-dependent fashion. In this sense, our aim is to devise a technique that could effectively communicate the workings of deep learning models to individuals who lack expertise in the field, by utilizing sensitivity maps.
 
-# Sensitivity maps
+## Sensitivity maps
 Each machine consists of a non-sequential juxtaposition of linear and nonlinear components. We use the sigmoid function to illustrate the construction of explainability maps for parametric machines that we shall call \textit{sensitivity maps}. However, the following construction holds for any pointwise nonlinear function. For the sake of intuition, we can think about the sigmoid function (i.e. the activation function we utilize in~\cref{classification}) as a piecewise linear function defined on three intervals: first, the function is nearly flat and tends towards zero. Then, the function has a positive slope, and hence positive derivative. Finally, the function returns to be constant and of value one. The input data traverse this function, crossing through these three sections. The data that pass through the outermost sections will not contribute to the output because they have almost zero derivative. Instead, points mapped to regions of positive slope contribute actively to the model's output. Practically, we compute the derivative of the nonlinear function with respect to the machine's output before the nonlinearity is applied to the input. We call this construction a sensitivity map.
 
 In time machines, the sensitivity map provides insights into individual time series by identifying the specific time points and learning depths where the model is more sensitive to the signal.
