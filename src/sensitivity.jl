@@ -34,7 +34,7 @@ function mean_losses_from_mpr(mpr, losses)
         push!(μ, mean(losses[mpr.patches[i]]))
         #push!(σ, std(losses[mpr.patches[i]]))
     end
-    return μ#, σ
+    return μ #, σ
 end
 
 
@@ -47,7 +47,7 @@ function n_values_in_cluster(mpr)
 end
 
 
-function dimensionality_reduction(data_train, data_test; n_components = 40) # input -> flatten della sensitivity
+function dimensionality_reduction(data_train, data_test; n_components = 20) # input -> flatten della sensitivity
     model = UMAP_(data_train, n_components)
     embedding = transform(model, data_test)
     return embedding
@@ -55,7 +55,7 @@ end
 
 # cardinality reduction
 function plot_mapper(data, filter, losses=0)
-    mpr = TDA.mapper(data, filter=filter, seed=0, intervals=4, overlap=0.7)
+    mpr = TDA.mapper(data, filter=filter, seed=0, intervals=4, overlap=0.5)
     mean_losses = mean_losses_from_mpr(mpr, losses)
     
     return mpr, Plots.plot(mpr; complex_layout=TDA.constant_layout, xlims=(-5,5), ylims=(-5,5), color=:Blues_9, zcolor=mean_losses, xticks=:none, yticks=:none)

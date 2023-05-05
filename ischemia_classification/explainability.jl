@@ -8,6 +8,7 @@ using Gadfly
 using BSON: @load, @save
 using Tracker
 using ischemia_classification_analysis
+using MLBase
 
 # Loading and processing data
 train = readdlm("data/ECG200_TRAIN.txt")
@@ -29,7 +30,7 @@ x_test = Flux.unsqueeze(x_test, 2)
 # weights = Tracker.data.(Flux.params(best_model));
 # @save "mymodel.bson" weights
 
-#Loading model parameters
+# Loading model parameters
 # Model
 dimensions = [16,16,16,16,16,16]
 timeblock = 16 
@@ -150,14 +151,14 @@ Makie.save("visualization/explainability/cam/series7.png", s_cam)
 
 # Graph metrics
 
-samples = mpr.patches[10]
+samples = mpr.patches[1] # node's id
 gtpositive = sum(train[samples,1] .==1)
 gtnegative = size(samples)[1] - gtpositive
 conf_matrix = MLBase.confusmat(2, gt_test[samples], onecold(best_model(x_test)[:,samples]))
-tp= conf_matrix[1,1]
-tn= conf_matrix[2,2]
-fp= conf_matrix[1,2]
-fn=conf_matrix[2,1]
+tp = conf_matrix[1,1]
+tn = conf_matrix[2,2]
+fp = conf_matrix[1,2]
+fn = conf_matrix[2,1]
 
 r = ROCNums(gtpositive, gtnegative, tp, tn, fp, fn)
 

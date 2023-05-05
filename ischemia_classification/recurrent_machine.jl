@@ -41,13 +41,13 @@ time_smoothness(m::RecurMachine) = smoothness(m.W, 1)
 
 loss = function (model, input, output)
     l = crossentropy(model(input), output)
-    c_t =  0.01f0 * time_smoothness(model[2])
+    c_t =  0.00f0 * time_smoothness(model[1])
     return l + c_t
 end
 
 
 # Define optimizer's hyperparameters
-opt = "Adam"
+opt = "LBFGS"
 learning_rate = 0.01
 line_search = BackTracking()
 

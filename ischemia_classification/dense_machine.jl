@@ -21,7 +21,7 @@ x_test = permutedims(test[:, 2:end], (2,1));
 
 # Define machine's hyperparameters
 machine_type = DenseMachine
-dimensions = [64,32,16,8] # solo 64,8
+dimensions = [96,64,32,16,8] # solo 64,8
 timeblock = 0 # only for recurrent
 pad = 0 # only for recurrent
 embedder = Dense(96,64)
@@ -35,18 +35,18 @@ time_smoothness(m::DenseMachine) = smoothness(m.W, 1)
 
 loss = function (model, input, output)
     l = crossentropy(model(input), output)
-    c_t =  0.01f0 * time_smoothness(model[2])
+    c_t =  0.00f0 * time_smoothness(model[2])
     return l + c_t
 end
 
 
 # Define optimizer's hyperparameters
-opt = "Adam"
+opt = "Adam" # or LBFGS or ConjugateGradient
 learning_rate = 0.01
 line_search = BackTracking()
 
 # Define training's hyperparameters
-n_epochs = 300
+n_epochs = 500
 
 device = cpu
 
@@ -70,7 +70,7 @@ best_params_dense_reg, best_model_dense_reg, loss_on_train_dense_reg, acc_train_
     n_epochs, 
     device);
 
-@info "Max accuracy on test:" maximum(acc_test_dense)
+@info "Max accuracy on test:" maximum(acc_test_dense_reg)
 
 
 # # Visualization
